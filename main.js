@@ -1,9 +1,4 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.module.js';
-import { EffectComposer } from 'https://cdn.jsdelivr.net/npm/three@0.157.0/examples/jsm/postprocessing/EffectComposer.js';
-import { RenderPass } from 'https://cdn.jsdelivr.net/npm/three@0.157.0/examples/jsm/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'https://cdn.jsdelivr.net/npm/three@0.157.0/examples/jsm/postprocessing/UnrealBloomPass.js';
-
-// Orientation Check
+// Orientation check
 function checkOrientation() {
   const alert = document.getElementById('rotate-alert');
   if (window.innerHeight > window.innerWidth) {
@@ -16,16 +11,17 @@ function checkOrientation() {
 window.addEventListener('load', checkOrientation);
 window.addEventListener('resize', checkOrientation);
 
-// THREE Setup
+// Scene setup
 const canvas = document.getElementById('game');
 const renderer = new THREE.WebGLRenderer({ canvas });
 renderer.setSize(window.innerWidth, window.innerHeight);
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
 
-const light = new THREE.HemisphereLight(0xffffff, 0x444444, 1.5);
-scene.add(light);
+// Lighting
+scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1.5));
 
+// Floor
 const floor = new THREE.Mesh(
   new THREE.PlaneGeometry(100, 100),
   new THREE.MeshStandardMaterial({ color: 0x444444 })
@@ -33,18 +29,22 @@ const floor = new THREE.Mesh(
 floor.rotation.x = -Math.PI / 2;
 scene.add(floor);
 
-const skyGeo = new THREE.SphereGeometry(500, 32, 32);
+// Skybox (simple sphere panorama)
+const skyGeo = new THREE.SphereGeometry(550, 32, 32);
 const skyMat = new THREE.MeshBasicMaterial({
-  map: new THREE.TextureLoader().load('https://threejs.org/examples/textures/uv_grid_opengl.jpg'),
+  map: new THREE.TextureLoader().load('/skybox.jpg'),
   side: THREE.BackSide
 });
 const sky = new THREE.Mesh(skyGeo, skyMat);
 scene.add(sky);
 
-const player = new THREE.Mesh(
-  new THREE.BoxGeometry(1, 2, 1),
-  new THREE.MeshStandardMaterial({ color: 0x33ccff, emissive: 0x2222ff })
-);
+// Player
+const playerMat = new THREE.MeshStandardMaterial({
+  color: 0x33ccff,
+  emissive: 0x00ccff,
+  emissiveIntensity: 1.5
+});
+const player = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), playerMat);
 player.position.y = 1;
 scene.add(player);
 
@@ -59,7 +59,6 @@ function updateCenter() {
   centerX = rect.left + rect.width / 2;
   centerY = rect.top + rect.height / 2;
 }
-
 function moveThumb(touch) {
   const dx = touch.clientX - centerX;
   const dy = touch.clientY - centerY;
@@ -73,7 +72,6 @@ function moveThumb(touch) {
   joystick.y = y / radius;
   joystick.active = true;
 }
-
 base.addEventListener('touchstart', e => { updateCenter(); moveThumb(e.touches[0]); });
 base.addEventListener('touchmove', e => moveThumb(e.touches[0]));
 base.addEventListener('touchend', () => {
@@ -81,10 +79,9 @@ base.addEventListener('touchend', () => {
   thumb.style.transform = 'translate(-50%, -50%)';
 });
 
-// Camera Orbit
+// Camera orbit
 let camYaw = 0, camPitch = 0;
 let swipeX = 0, swipeY = 0;
-
 canvas.addEventListener('touchstart', e => {
   swipeX = e.touches[0].clientX;
   swipeY = e.touches[0].clientY;
@@ -98,7 +95,6 @@ canvas.addEventListener('touchmove', e => {
   swipeX = e.touches[0].clientX;
   swipeY = e.touches[0].clientY;
 });
-
 function updateCameraOrbit() {
   const r = 10, h = 5;
   const cosP = Math.cos(camPitch);
@@ -121,53 +117,55 @@ document.getElementById('jump-btn').addEventListener('click', () => {
   }
 });
 
-// Postprocessing
-const composer = new EffectComposer(renderer);
-const renderPass = new RenderPass(scene, camera);
-const bloomPass = new UnrealBloomPass(
-  new THREE.Vector2(window.innerWidth, window.innerHeight),
-  0.8, 0.4, 0.85
-);
-composer.addPass(renderPass);
-composer.addPass(bloomPass);
-
-// Pause & Settings
+// Pause system
 let isPaused = false;
 document.getElementById('pause-btn').onclick = () => {
-  isPaused = !isPaused;
-  document.getElementById('pause-menu').style.display = isPaused ? 'block' : 'none';
+  isPaused = true;
+  document.getElementById('pause-menu').style.display = 'block';
 };
-
 document.getElementById('resume-btn').onclick = () => {
   isPaused = false;
   document.getElementById('pause-menu').style.display = 'none';
 };
-
 document.getElementById('settings-btn').onclick = () => {
   document.getElementById('pause-menu').style.display = 'none';
   document.getElementById('settings-menu').style.display = 'block';
 };
 
-const bloomToggle = document.getElementById('bloom-toggle');
+// Visual toggles
+const glowToggle = document.getElementById('glow-toggle');
 const skyboxToggle = document.getElementById('skybox-toggle');
-const godrayToggle = document.getElementById('godray-toggle');
 
-// Animate
+// Animate loop
 function animate() {
   requestAnimationFrame(animate);
   if (isPaused) return;
 
   if (joystick.active) {
     const speed = 0.1;
-    const a = camYaw;
-    const moveX = Math.cos(a) * joystick.x - Math.sin(a) * joystick.y;
-    const moveZ = Math.sin(a) * joystick.x + Math.cos(a) * joystick.y;
-    player.position.x += moveX * speed;
-    player.position.z += moveZ * speed;
+
+    // Compute forward vector from camera (horizontal only)
+    const forward = new THREE.Vector3();
+    camera.getWorldDirection(forward);
+    forward.y = 0;
+    forward.normalize();
+
+    // Compute right vector
+    const right = new THREE.Vector3();
+    right.crossVectors(forward, camera.up).normalize();
+
+    // Movement from joystick
+    const move = new THREE.Vector3();
+    move.addScaledVector(forward, -joystick.y);
+    move.addScaledVector(right, joystick.x);
+    move.normalize().multiplyScalar(speed);
+
+    player.position.add(move);
   }
 
   velocityY -= 0.01;
   player.position.y += velocityY;
+
   if (player.position.y <= 1) {
     player.position.y = 1;
     velocityY = 0;
@@ -176,8 +174,8 @@ function animate() {
 
   updateCameraOrbit();
   sky.visible = skyboxToggle.checked;
-  bloomPass.enabled = bloomToggle.checked;
-  composer.render();
+  sky.rotation.y += 0.0005;
+  playerMat.emissiveIntensity = glowToggle.checked ? 1.5 : 0;
+  renderer.render(scene, camera);
 }
-
 animate();

@@ -1,37 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Rhythm World</title>
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
-    <canvas id="game"></canvas>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rhythm World</title>
 
-    <!-- Controls -->
-    <div id="joystick-base"><div id="joystick-thumb"></div></div>
-    <button id="jump-btn">Jump</button>
-    <button id="pause-btn">⏸️ Pause</button>
+  <!-- Classic Three.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
 
-    <!-- Menus -->
-    <div id="pause-menu">
-      <h2>Paused</h2>
-      <button id="settings-btn">⚙️ Settings</button><br><br>
-      <button id="resume-btn">▶️ Resume</button>
-    </div>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <canvas id="game"></canvas>
 
-    <div id="settings-menu">
-      <h2>Visual Settings</h2>
-      <label><input type="checkbox" id="bloom-toggle" checked /> Bloom</label><br>
-      <label><input type="checkbox" id="skybox-toggle" checked /> Skybox</label><br>
-      <label><input type="checkbox" id="godray-toggle" /> God Rays</label><br><br>
-      <button onclick="document.getElementById('settings-menu').style.display='none'">Close</button>
-    </div>
+  <!-- Controls -->
+  <div id="joystick-base"><div id="joystick-thumb"></div></div>
+  <button id="jump-btn">Jump</button>
+  <button id="pause-btn">⏸️ Pause</button>
 
-    <!-- Orientation Alert -->
-    <div id="rotate-alert">Please rotate your device to horizontal<br/>and tap to reload</div>
+  <!-- Menus -->
+  <div id="pause-menu">
+    <h2>Paused</h2>
+    <button id="resume-btn">▶️ Resume</button>
+    <br><br>
+    <button id="settings-btn">⚙️ Settings</button>
+  </div>
 
-    <script type="module" src="main.js"></script>
-  </body>
+  <div id="settings-menu">
+    <h2>Visual Settings</h2>
+    <label><input type="checkbox" id="glow-toggle" checked /> Emissive Glow</label><br>
+    <label><input type="checkbox" id="skybox-toggle" checked /> Skybox</label><br><br>
+    <button onclick="document.getElementById('settings-menu').style.display='none';isPaused = false;">Save and Resume</button>
+  </div>
+
+  <!-- Orientation Alert -->
+  <div id="rotate-alert">Please rotate your device to horizontal<br/>and tap to reload</div>
+
+  <script src="main.js"></script>
+</body>
 </html>
