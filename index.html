@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rhythm World</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <canvas id="game"></canvas>
+
+    <!-- Controls -->
+    <div id="joystick-base"><div id="joystick-thumb"></div></div>
+    <button id="jump-btn">Jump</button>
+    <button id="pause-btn">⏸️ Pause</button>
+
+    <!-- Menus -->
+    <div id="pause-menu">
+      <h2>Paused</h2>
+      <button id="settings-btn">⚙️ Settings</button><br><br>
+      <button id="resume-btn">▶️ Resume</button>
+    </div>
+
+    <div id="settings-menu">
+      <h2>Visual Settings</h2>
+      <label><input type="checkbox" id="bloom-toggle" checked /> Bloom</label><br>
+      <label><input type="checkbox" id="skybox-toggle" checked /> Skybox</label><br>
+      <label><input type="checkbox" id="godray-toggle" /> God Rays</label><br><br>
+      <button onclick="document.getElementById('settings-menu').style.display='none'">Close</button>
+    </div>
+
+    <!-- Orientation Alert -->
+    <div id="rotate-alert">Please rotate your device to horizontal<br/>and tap to reload</div>
+
+    <script type="module" src="main.js"></script>
+  </body>
+</html>
