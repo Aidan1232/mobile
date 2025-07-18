@@ -50,7 +50,7 @@ scene.add(floor);
 // Skybox
 const skyGeo = new THREE.SphereGeometry(550, 32, 32);
 const skyMat = new THREE.MeshBasicMaterial({
-  map: new THREE.TextureLoader().load('/skybox.jpg'),
+  map: new THREE.TextureLoader().load('/mobile/skybox.jpg'),
   side: THREE.BackSide
 });
 const sky = new THREE.Mesh(skyGeo, skyMat);
