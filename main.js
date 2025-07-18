@@ -15,11 +15,28 @@ window.addEventListener('resize', checkOrientation);
 const canvas = document.getElementById('game');
 const renderer = new THREE.WebGLRenderer({ canvas });
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
 
 // Lighting
+const light = new THREE.DirectionalLight(0xffffff, 1);
+light.position.set(10, 20, 10);
+light.castShadow = true;
 scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1.5));
+scene.add(light);
+
+// Fake sun mesh
+const sunMat = new THREE.MeshBasicMaterial({
+  color: 0xffcc66,
+  emissive: 0xffcc66,
+  emissiveIntensity: 1,
+});
+const sunGeo = new THREE.SphereGeometry(10, 16, 16);
+const sun = new THREE.Mesh(sunGeo, sunMat);
+scene.add(sun);
+sun.position.set(30, 50, 30); // Example position in the sky
 
 // Floor
 const floor = new THREE.Mesh(
@@ -27,12 +44,13 @@ const floor = new THREE.Mesh(
   new THREE.MeshStandardMaterial({ color: 0x444444 })
 );
 floor.rotation.x = -Math.PI / 2;
+floor.receiveShadow = true;
 scene.add(floor);
 
-// Skybox (simple sphere panorama)
+// Skybox
 const skyGeo = new THREE.SphereGeometry(550, 32, 32);
 const skyMat = new THREE.MeshBasicMaterial({
-  map: new THREE.TextureLoader().load('/mobile/skybox.jpg'),
+  map: new THREE.TextureLoader().load('/skybox.jpg'),
   side: THREE.BackSide
 });
 const sky = new THREE.Mesh(skyGeo, skyMat);
@@ -46,7 +64,19 @@ const playerMat = new THREE.MeshStandardMaterial({
 });
 const player = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), playerMat);
 player.position.y = 1;
+player.castShadow = true;
 scene.add(player);
+
+// Blob Shadow
+const shadowMat = new THREE.MeshBasicMaterial({
+  color: 0x000000,
+  transparent: true,
+  opacity: 0.3
+});
+const shadowGeo = new THREE.CircleGeometry(0.8, 32);
+const blobShadow = new THREE.Mesh(shadowGeo, shadowMat);
+blobShadow.rotation.x = -Math.PI / 2;
+scene.add(blobShadow);
 
 // Joystick
 const joystick = { x: 0, y: 0, active: false };
@@ -135,6 +165,23 @@ document.getElementById('settings-btn').onclick = () => {
 // Visual toggles
 const glowToggle = document.getElementById('glow-toggle');
 const skyboxToggle = document.getElementById('skybox-toggle');
+const shadowToggle = document.getElementById('shadow-toggle');
+const sunToggle = document.getElementById('sun-toggle');
+sunToggle.addEventListener('change', () => {
+  sun.visible = sunToggle.checked;
+});
+sun.visible = sunToggle.checked;
+
+
+function updateShadowState() {
+  const useRealShadow = shadowToggle.checked;
+  light.castShadow = useRealShadow;
+  player.castShadow = useRealShadow;
+  floor.receiveShadow = useRealShadow;
+  blobShadow.visible = !useRealShadow;
+}
+shadowToggle.addEventListener('change', updateShadowState);
+updateShadowState();
 
 // Animate loop
 function animate() {
@@ -143,18 +190,14 @@ function animate() {
 
   if (joystick.active) {
     const speed = 0.1;
-
-    // Compute forward vector from camera (horizontal only)
     const forward = new THREE.Vector3();
     camera.getWorldDirection(forward);
     forward.y = 0;
     forward.normalize();
 
-    // Compute right vector
     const right = new THREE.Vector3();
     right.crossVectors(forward, camera.up).normalize();
 
-    // Movement from joystick
     const move = new THREE.Vector3();
     move.addScaledVector(forward, -joystick.y);
     move.addScaledVector(right, joystick.x);
@@ -172,7 +215,9 @@ function animate() {
     grounded = true;
   }
 
+  blobShadow.position.set(player.position.x, 0.01, player.position.z);
   updateCameraOrbit();
+
   sky.visible = skyboxToggle.checked;
   sky.rotation.y += 0.0005;
   playerMat.emissiveIntensity = glowToggle.checked ? 1.5 : 0;
